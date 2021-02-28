@@ -1,0 +1,56 @@
+
+
+-- TASK 1 ============================
+
+update users set created_at = NOW(), updated_at = NOW(); 
+
+
+-- TASK 2 ============================ 
+CREATE TABLE `new_shop`.`users_wrong_date` (
+  `id` BIGINT UNSIGNED NOT NULL,
+  `name` VARCHAR(255) NULL DEFAULT NULL,
+  `birthday_at` DATE NULL DEFAULT NULL,
+  `created_at` VARCHAR(45) NULL,
+  `updated_at` VARCHAR(45) NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE);
+
+insert into users_wrong_date (id, `name`, birthday_at) select id, `name`, birthday_at from users;
+
+ UPDATE `users_wrong_date` SET `created_at` = '10.04.2019 19:22', `updated_at` = '12.03.2020 19:22' WHERE (`id` = '2');
+UPDATE `users_wrong_date` SET `created_at` = '02.12.2019 12:22', `updated_at` = '20.06.2020 03:12' WHERE (`id` = '3');
+UPDATE `users_wrong_date` SET `created_at` = '22.09.2019 03:22', `updated_at` = '10.05.2020 05:56' WHERE (`id` = '4');
+UPDATE `users_wrong_date` SET `created_at` = '14.05.2019 02:22', `updated_at` = '1.04.2020 07:43' WHERE (`id` = '5');
+UPDATE `users_wrong_date` SET `created_at` = '11.03.2019 05:22', `updated_at` = '11.03.2020 06:30' WHERE (`id` = '6');
+
+CREATE TABLE `new_shop`.`users_good_date` (
+  `id` BIGINT UNSIGNED NOT NULL,
+  `name` VARCHAR(255) NULL DEFAULT NULL,
+  `birthday_at` DATE NULL DEFAULT NULL,
+  `created_at` DATETIME NULL,
+  `updated_at` DATETIME NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE);
+
+INSERT INTO users_good_date (`id`, `name`, birthday_at, created_at, updated_at) 
+select id, `name`, birthday_at, str_to_date(concat(replace(created_at,'.','-'),':00'), '%d-%m-%Y %T'), str_to_date(concat(replace(updated_at,'.','-'),':00'), '%d-%m-%Y %T')
+from users_wrong_date;
+
+drop table users_wrong_date;
+
+alter table users_good_date rename users_wrong_date;
+
+
+select users_wrong_datecreated_at from users_wrong_date ;
+
+-- TASK 3  ======================  
+
+SELECT * FROM storehouses_products order by if(`value` = 0, 1, 0), `value`;
+
+-- TASK 4 =======================
+
+select * from users where user_birthday like '%may%' or user_birthday like '%august%';
+
+-- TASK 5 =======================
+
+SELECT * FROM catalogs WHERE id IN (5, 1, 2) order by sin(id);
