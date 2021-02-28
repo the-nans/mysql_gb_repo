@@ -1,0 +1,6 @@
+-- TASK 1 ==================
+select  avg (TO_DAYS(NOW()) - TO_DAYS(birthday_at)) DIV 365  from users;
+-- TASK 2 ==================
+select dayofweek(concat(substring(curdate(), 1, 5), substring(birthday_at, 6, 10))) as daysofweek, count(*) as birthdays from users group by daysofweek ;
+-- TASK 3 ==================
+select floor(exp(SUM(log(id)))) from users;
