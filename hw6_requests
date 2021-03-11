@@ -1,0 +1,112 @@
+-- 10 мёртвых душ 
+
+select 
+*, 
+(select count(*) from message where from_user_id = `profile`.user_id) +
+(select count(*) from message where to_user_id = `profile`.user_id) + 
+(select count(*) from post where post.user_id = `profile`.user_id) + 
+(select count(*) from post_like where post_like.user_id = `profile`.user_id) + 
+(select count(*) from media_like where media_like.user_id = `profile`.user_id)
+ as total_activity
+from `profile`
+order by total_activity asc limit 10;
+
+-- определить пол среднего самого лайкаря
+select  
+if ((
+select 
+	count(*)
+	from `post_like`
+	where
+		user_id in (select * from (select user_id from `profile` where gender = 'f' ) t)  )
+   +
+   (
+   select count(*)
+from `media_like`
+where
+	user_id in (select * from (select user_id from `profile` where gender = 'f' ) t) 
+) > 
+
+(
+select 
+	count(*)
+	from `post_like`
+	where
+		user_id in (select * from (select user_id from `profile` where gender = 'm' ) t)  )
+   +
+   (
+   select count(*)
+from `media_like`
+where
+	user_id in (select * from (select user_id from `profile` where gender = 'm' ) t) 
+), 'Больше женских лайков', 'Больше мужских лайков' )
+as result
+;
+
+
+
+
+
+-- общее кол-во лайков 10 самых молодых пользователей (у меня две таблицы с лайками, так что пришлось как-то так)
+select 
+(
+SELECT 
+    COUNT(*)  FROM (SELECT *, (SELECT post.user_id FROM post WHERE post.id = post_like.post_id) AS post_owner 
+    FROM `post_like` 
+    HAVING post_owner IN (SELECT  * FROM (SELECT user_id FROM
+            `profile`
+        ORDER BY birthday DESC  LIMIT 10) AS t)) as alias
+)
++
+(        
+SELECT 
+    COUNT(*)  FROM (SELECT *, (SELECT media.user_id FROM media WHERE media.id = media_like.media_id) AS media_owner 
+    FROM `media_like` 
+    HAVING media_owner IN (SELECT  * FROM (SELECT user_id FROM
+            `profile`
+        ORDER BY birthday DESC  LIMIT 10) AS t)) as alias2
+)
+as total_likes;
+        
+
+
+SELECT 
+    *,
+    (SELECT 
+            post.user_id
+        FROM
+            post
+        WHERE
+            post.id = post_like.post_id) AS post_owner
+FROM
+    `post_like`
+HAVING post_owner IN (SELECT 
+        *
+    FROM
+        (SELECT 
+            user_id
+        FROM
+            `profile`
+        ORDER BY birthday DESC
+        LIMIT 10) t)
+;
+    
+    select *, (select media.user_id from media where media.id = media_like.media_id) as media_owner
+from `media_like`
+having
+	media_owner in (select * from (select user_id from `profile` order by birthday desc limit 10) t) ;
+
+
+select *, (select post.user_id from post where post.id = post_like.post_id) as post_owner from post_like;
+select user_id from `profile` order by birthday desc limit 10;
+
+-- самый частый собеседник  рандомного юзера
+select 
+if(from_user_id = 59, from_user_id, to_user_id) as username, 
+(select concat(`firstname`, ' ', `lastname`) as user_names from `profile` where `profile`.user_id = `from_user_id`) as user_nicename,
+if(from_user_id = 59, to_user_id, from_user_id) as visavis, 
+(select concat(`firstname`, ' ', `lastname`) as user_names from `profile` where `profile`.user_id = `to_user_id`) as visavis_nicename,
+count(from_user_id = 59) + count(to_user_id = 59) as msgs 
+ from message where from_user_id = 59 or to_user_id = 59
+ group by to_user_id
+ order by msgs desc limit 1;
