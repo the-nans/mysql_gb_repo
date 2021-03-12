@@ -1,0 +1,27 @@
+-- все, кто что-то заказывал
+select * from users where id in (select user_id from orders);
+
+-- список товаров и их каталогов
+
+select `products`.name as product, `catalogs`.name as catalog, price, `description`, created_at, updated_at  
+from products 
+join catalogs 
+on 
+catalog_id = `catalogs`.id; 
+
+-- русские названия городов и сёл
+use new_shop;
+create table flights (
+id serial primary key, 
+`from` varchar(45),
+`to` varchar(45));
+insert into flights (`from`, `to`) values ('moscow', 'omsk'), ('novgorod', 'kazan'), ('irkutsk', 'moscow'), ('omsk', 'irkutsk'), ('moscow', 'kazan');
+
+create table cities(
+label varchar(45),
+`name` varchar(255));
+
+insert into cities (label, `name`) values ('moscow', 'Москва'), ('irkutsk', 'Иркутск'), ('novgorod', 'Новгород'), ('kazan', 'Казань'), ('omsk', 'Омск');
+
+-- собственно выборка
+select f.id, c.`name`, c1.`name` from flights f inner join cities c on f.`from` = c.`label` inner join cities c1 on c1.`label` = f.`to` order by f.id; 
