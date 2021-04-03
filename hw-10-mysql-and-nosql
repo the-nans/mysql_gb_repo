@@ -1,0 +1,105 @@
+-- ================= Оптимизация запросов Mysql
+
+-- 1001 пользователь 
+
+drop procedure if exists `thsndandone_user`;
+delimiter //
+create procedure thsndandone_user()
+begin
+declare i int default 1;
+while i < 1002
+	do
+		insert into `users`(`name`, `birthday_at`) values (concat('user number', i), date(now()-interval i hour));
+		set i = i + 1;
+	end while; 
+end//
+delimiter ; 
+
+call thsndandone_user(); 
+
+-- триггеры и логи
+ 
+use new_shop;
+CREATE TABLE IF NOT EXISTS  `log` (
+		`timestamp` datetime not null, 
+        `tablename` varchar(40) not null, 
+        `primarykey` int unsigned not null,
+        `name` varchar(255)  not null) engine=archive; 
+
+drop trigger if exists `catalog_insert` ;
+delimiter //
+create trigger `catalog_insert` after insert on catalogs
+for each row
+begin
+	select SQL_NO_CACHE max(`id`) into @lastinsid  from `catalogs`;
+	select SQL_NO_CACHE `name` into @lastinsertname from `catalogs` where id = @lastinsid;
+	insert into `log` (`timestamp`, `tablename`, `primarykey`, `name`) values (now(), 'catalogs', @lastinsid, @lastinsertname); 
+end//
+delimiter ;
+
+drop trigger if exists `user_insert` ;
+delimiter //
+create trigger `user_insert` after insert on users
+for each row
+begin
+	select SQL_NO_CACHE max(`id`) into @lastinsid  from `users`;
+	select SQL_NO_CACHE `name` into @lastinsertname from `users` where id = @lastinsid;
+	insert into `log` (`timestamp`, `tablename`, `primarykey`, `name`) values (now(), 'users', @lastinsid, @lastinsertname); 
+end//
+delimiter ;
+
+drop trigger if exists `product_insert` ;
+delimiter //
+create trigger `product_insert` after insert on products
+for each row
+begin
+	select SQL_NO_CACHE max(`id`) into @lastinsid  from `products`;
+	select SQL_NO_CACHE `name` into @lastinsertname from `products` where id = @lastinsid;
+	insert into `log` (`timestamp`, `tablename`, `primarykey`, `name`) values (now(), 'products', @lastinsid, @lastinsertname); 
+end//
+delimiter ;
+
+-- ================= NoSQL базы
+
+/* 
+1. redis - подсчёт ip
+set 127.0.0.1 1
+incr 127.0.0.1
+
+2. redis поиск email юзернейма 
+mset user u@ser.com user1 u@ser1.com user2 u@ser2.com
+get user
+и наоборот
+mser u@user.com user u2@user.com user2 u3@user.com user3
+get u@ser.com
+
+3. Хранение категорий и товарных позиций в магазине, MongoDB
+[
+  {
+    "products": [
+      {
+        "id": 1,
+        "name": "Intel Core i5-8700",
+        "description": "Процессор для настольных персональных компьютеров, основанных на платформе Intel.",
+        "price": 4780,
+        "created_at": "2020-03-04 18:01:43",
+        "updated_at": "2020-03-04 18:01:43",
+        "catalog_id": 1
+      },
+      {
+        "id": 2,
+        "name": "Gigabyte H310M S2H",
+        "description": "Материнская плата Gigabyte H310M S2H, H310, Socket 1151-V2, DDR4, mATX",
+        "price": 4790,
+        "created_at": "2020-03-12 17:35:42",
+        "updated_at": "2021-03-12 17:35:42",
+        "catalog_id": 2
+      }
+    ],
+    "catalogs": {
+      "1": "Процессоры",
+      "2": "Материнские платы",
+      "3": "Видеокарты"
+    }
+  }
+]
